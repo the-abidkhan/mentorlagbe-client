@@ -1,7 +1,27 @@
 
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { FcGoogle } from "react-icons/fc";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignupPage() {
+  const [error, setError] = useState("");
+
+  const handleGoogleSignup = async () => {
+    setError("");
+
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
+
+    if (error) {
+      setError(error.message || "Google signup failed.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md rounded-xl bg-gray-900 p-8 shadow-xl">
@@ -18,6 +38,7 @@ export default function SignupPage() {
             <label className="block text-sm text-gray-300 mb-2">
               Full Name
             </label>
+
             <input
               type="text"
               placeholder="Enter your name"
@@ -29,6 +50,7 @@ export default function SignupPage() {
             <label className="block text-sm text-gray-300 mb-2">
               Email Address
             </label>
+
             <input
               type="email"
               placeholder="Enter your email"
@@ -40,6 +62,7 @@ export default function SignupPage() {
             <label className="block text-sm text-gray-300 mb-2">
               Phone Number
             </label>
+
             <input
               type="tel"
               placeholder="Enter your phone number"
@@ -51,6 +74,7 @@ export default function SignupPage() {
             <label className="block text-sm text-gray-300 mb-2">
               Account Type
             </label>
+
             <select
               className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
               defaultValue="student"
@@ -64,6 +88,7 @@ export default function SignupPage() {
             <label className="block text-sm text-gray-300 mb-2">
               Password
             </label>
+
             <input
               type="password"
               placeholder="Create a password"
@@ -88,6 +113,27 @@ export default function SignupPage() {
             Login
           </Link>
         </p>
+
+        {error && (
+          <p className="text-red-400 text-sm text-center mt-4">
+            {error}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="h-px flex-1 bg-gray-700"></div>
+          <span className="text-gray-500 text-sm">OR</span>
+          <div className="h-px flex-1 bg-gray-700"></div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignup}
+          className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-700 py-3 text-white font-semibold hover:bg-gray-800 transition"
+        >
+          <FcGoogle size={22} />
+          Continue with Google
+        </button>
       </div>
     </div>
   );
