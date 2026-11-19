@@ -1,5 +1,5 @@
-
 import Link from "next/link";
+import FeaturedTuitions from "@/components/FeaturedTuitions";
 
 const features = [
   {
@@ -230,6 +230,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <FeaturedTuitions />
 
       {/* Bottom CTA */}
       <section className="bg-white px-6 py-20">
