@@ -176,11 +176,11 @@ function TuitionDetailsContent() {
               <div className="my-6 border-t border-slate-100" />
 
               <Link
-                href="/login"
-                className="block rounded-xl bg-indigo-600 px-5 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
-              >
-                Apply for Tuition
-              </Link>
+  href={`/apply/${id}`}
+  className="block rounded-xl bg-indigo-600 px-5 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
+>
+  Apply for Tuition
+</Link>
 
               <p className="mt-4 text-center text-xs text-slate-500">
                 Login required to apply for this tuition.

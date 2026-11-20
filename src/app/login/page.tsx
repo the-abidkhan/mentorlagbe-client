@@ -14,7 +14,7 @@ export default function LoginPage() {
 
     const { error } = await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
     });
 
     if (error) {

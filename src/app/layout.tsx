@@ -1,6 +1,10 @@
+
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -34,8 +38,20 @@ export default function RootLayout({
     >
       <body className="font-sans min-h-full flex flex-col bg-[#F8FAFC] text-[#0F172A]">
         <Navbar />
+
         <main className="flex-1">{children}</main>
+
         <Footer />
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
       </body>
     </html>
   );
