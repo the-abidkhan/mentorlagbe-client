@@ -2,23 +2,75 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
-  const [error, setError] = useState("");
+  const router = useRouter();
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Check login session
+  const { data: session, isPending } = authClient.useSession();
+
+  // Redirect logged-in users to homepage
+  useEffect(() => {
+    if (!isPending && session) {
+      router.replace("/");
+    }
+  }, [session, isPending, router]);
+
+  // Wait for session check
+  if (isPending || session) {
+    return null;
+  }
+
+  // Email and password login
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const { error } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+      });
+
+      if (error) {
+        setError(error.message || "Login failed.");
+        return;
+      }
+
+      router.push("/");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google login
   const handleGoogleLogin = async () => {
     setError("");
 
-    const { error } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
-    });
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+      });
 
-    if (error) {
-      setError(error.message || "Google login failed.");
+      if (error) {
+        setError(error.message || "Google login failed.");
+      }
+    } catch {
+      setError("Google login failed. Please try again.");
     }
   };
 
@@ -33,7 +85,8 @@ export default function LoginPage() {
           Login to your MentorLagbe account
         </p>
 
-        <form className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Email */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Email Address
@@ -41,11 +94,15 @@ export default function LoginPage() {
 
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
+              required
               className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Password
@@ -53,16 +110,28 @@ export default function LoginPage() {
 
             <input
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
+              required
               className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
             />
           </div>
 
+          {/* Error */}
+          {error && (
+            <p className="text-red-400 text-sm text-center">
+              {error}
+            </p>
+          )}
+
+          {/* Login Button */}
           <button
-            type="button"
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
@@ -76,18 +145,14 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {error && (
-          <p className="text-red-400 text-sm text-center mt-4">
-            {error}
-          </p>
-        )}
-
+        {/* Divider */}
         <div className="flex items-center gap-3 my-6">
           <div className="h-px flex-1 bg-gray-700"></div>
           <span className="text-gray-500 text-sm">OR</span>
           <div className="h-px flex-1 bg-gray-700"></div>
         </div>
 
+        {/* Google Login */}
         <button
           type="button"
           onClick={handleGoogleLogin}

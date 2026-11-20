@@ -1,135 +1,216 @@
-
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
 
 export default function SignupPage() {
-  const [error, setError] = useState("");
+  const router = useRouter();
 
+  // Check login session
+  const { data: session, isPending } = authClient.useSession();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Redirect logged-in users to homepage
+  useEffect(() => {
+    if (!isPending && session) {
+      router.replace("/");
+    }
+  }, [session, isPending, router]);
+
+  // Show nothing while checking session or redirecting
+  if (isPending || session) {
+    return null;
+  }
+
+  // Email and password signup
+  const handleSignup = async () => {
+    setError("");
+
+    if (!name.trim() || !email.trim() || !password) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await authClient.signUp.email({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        role,
+        phone: phone.trim(),
+        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+      });
+
+      if (error) {
+        setError(error.message || "Signup failed. Please try again.");
+        return;
+      }
+
+      router.push("/");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google signup
   const handleGoogleSignup = async () => {
     setError("");
 
-    const { error } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/",
-    });
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+      });
 
-    if (error) {
-      setError(error.message || "Google signup failed.");
+      if (error) {
+        setError(error.message || "Google signup failed.");
+      }
+    } catch {
+      setError("Google signup failed. Please try again.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md rounded-xl bg-gray-900 p-8 shadow-xl">
-        <h1 className="text-3xl font-bold text-white text-center">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+        <h1 className="text-2xl font-bold text-slate-900 text-center mb-2">
           Create Account
         </h1>
 
-        <p className="text-gray-400 text-center mt-2 mb-8">
+        <p className="text-slate-500 text-center mb-6">
           Join MentorLagbe today
         </p>
 
-        <form className="space-y-5">
+        <div className="space-y-4">
+          {/* Full Name */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Full Name
             </label>
-
             <input
               type="text"
-              placeholder="Enter your name"
-              className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              placeholder="Enter your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-indigo-600"
             />
           </div>
 
+          {/* Email */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Email Address
             </label>
-
             <input
               type="email"
               placeholder="Enter your email"
-              className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-indigo-600"
             />
           </div>
 
+          {/* Phone */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Phone Number
             </label>
-
             <input
               type="tel"
               placeholder="Enter your phone number"
-              className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-indigo-600"
             />
           </div>
 
+          {/* Role Selection */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
-              Account Type
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Select Your Role
             </label>
-
             <select
-              className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-              defaultValue="student"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-indigo-600 bg-white"
             >
               <option value="student">Student</option>
               <option value="tutor">Tutor</option>
             </select>
           </div>
 
+          {/* Password */}
           <div>
-            <label className="block text-sm text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Password
             </label>
-
             <input
               type="password"
               placeholder="Create a password"
-              className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:border-indigo-600"
             />
           </div>
 
+          {/* Error */}
+          {error && (
+            <p className="text-sm text-red-500">{error}</p>
+          )}
+
+          {/* Create Account Button */}
           <button
             type="button"
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
+            onClick={handleSignup}
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
           >
-            Create Account
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
-        </form>
+        </div>
 
-        <p className="text-center text-gray-400 text-sm mt-6">
+        <p className="text-center text-sm text-slate-600 mt-5">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-blue-400 hover:text-blue-300"
+            className="text-indigo-600 font-semibold hover:underline"
           >
             Login
           </Link>
         </p>
 
-        {error && (
-          <p className="text-red-400 text-sm text-center mt-4">
-            {error}
-          </p>
-        )}
-
+        {/* Divider */}
         <div className="flex items-center gap-3 my-6">
-          <div className="h-px flex-1 bg-gray-700"></div>
-          <span className="text-gray-500 text-sm">OR</span>
-          <div className="h-px flex-1 bg-gray-700"></div>
+          <div className="flex-1 h-px bg-slate-200"></div>
+          <span className="text-sm text-slate-400">OR</span>
+          <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 
+        {/* Google Signup */}
         <button
           type="button"
           onClick={handleGoogleSignup}
-          className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-700 py-3 text-white font-semibold hover:bg-gray-800 transition"
+          className="w-full border border-slate-200 hover:bg-slate-50 py-3 rounded-lg flex items-center justify-center gap-3 font-medium text-slate-700 transition"
         >
           <FcGoogle size={22} />
           Continue with Google
