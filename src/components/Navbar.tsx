@@ -42,6 +42,25 @@ export default function Navbar() {
     }
   };
 
+  // Get dashboard link according to user role
+  const getDashboardLink = () => {
+    const role = session?.user?.role;
+
+    if (role === "student") {
+      return "/student/dashboard";
+    }
+
+    if (role === "tutor") {
+      return "/tutor/dashboard";
+    }
+
+    if (role === "admin") {
+      return "/admin/dashboard";
+    }
+
+    return "/dashboard";
+  };
+
   return (
     <nav className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -53,19 +72,31 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link href="/" className="text-slate-600 hover:text-indigo-600 transition">
+          <Link
+            href="/"
+            className="text-slate-600 hover:text-indigo-600 transition"
+          >
             Home
           </Link>
 
-          <Link href="/tuitions" className="text-slate-600 hover:text-indigo-600 transition">
+          <Link
+            href="/tuitions"
+            className="text-slate-600 hover:text-indigo-600 transition"
+          >
             Find Tuition
           </Link>
 
-          <Link href="/pricing" className="text-slate-600 hover:text-indigo-600 transition">
+          <Link
+            href="/pricing"
+            className="text-slate-600 hover:text-indigo-600 transition"
+          >
             Pricing &amp; Pro
           </Link>
 
-          <Link href="/about" className="text-slate-600 hover:text-indigo-600 transition">
+          <Link
+            href="/about"
+            className="text-slate-600 hover:text-indigo-600 transition"
+          >
             About
           </Link>
         </div>
@@ -78,6 +109,13 @@ export default function Navbar() {
               <span className="hidden sm:block text-slate-700">
                 Hi, {session.user.name || session.user.email}
               </span>
+
+              <Link
+                href={getDashboardLink()}
+                className="text-indigo-600 hover:text-indigo-700 transition"
+              >
+                Dashboard
+              </Link>
 
               <button
                 onClick={handleLogout}
