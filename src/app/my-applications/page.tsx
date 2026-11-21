@@ -23,6 +23,7 @@ export default function MyApplicationsPage() {
 
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -66,6 +67,57 @@ export default function MyApplicationsPage() {
     }
   }, [session, isPending]);
 
+  // Student cancels a pending application
+  const handleCancelApplication = async (applicationId: string) => {
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel this application?"
+    );
+
+    if (!confirmCancel) {
+      return;
+    }
+
+    try {
+      setCancellingId(applicationId);
+
+      const { data } = await authClient.token();
+
+      if (!data?.token) {
+        toast.error("Please login again.");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/applications/${applicationId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${data.token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.message || "Failed to cancel application.");
+        return;
+      }
+
+      setApplications((previousApplications) =>
+        previousApplications.filter(
+          (application) => application._id !== applicationId
+        )
+      );
+
+      toast.success("Application cancelled successfully.");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   const getStatusStyle = (status: string) => {
     if (status === "accepted") {
       return "bg-emerald-50 text-emerald-700";
@@ -92,9 +144,11 @@ export default function MyApplicationsPage() {
         <h1 className="text-2xl font-bold text-slate-900">
           Please Login First
         </h1>
+
         <p className="text-slate-500 mt-2">
           Login to see your tuition applications.
         </p>
+
         <Link
           href="/login"
           className="mt-5 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg"
@@ -129,6 +183,7 @@ export default function MyApplicationsPage() {
           <p className="text-sm text-slate-500">
             Total Applications
           </p>
+
           <h2 className="text-3xl font-bold text-slate-900 mt-1">
             {applications.length}
           </h2>
@@ -219,11 +274,30 @@ export default function MyApplicationsPage() {
                     <p className="text-sm text-slate-400">
                       Your Message
                     </p>
+
                     <p className="text-sm text-slate-700 mt-1">
                       {application.studentNote}
                     </p>
                   </div>
                 )}
+
+                {/* Cancel Button */}
+                {application.status === "pending" && (
+                  <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                    <button
+                      onClick={() =>
+                        handleCancelApplication(application._id)
+                      }
+                      disabled={cancellingId === application._id}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {cancellingId === application._id
+                        ? "Cancelling..."
+                        : "Cancel Application"}
+                    </button>
+                  </div>
+                )}
+
               </div>
             ))}
           </div>
