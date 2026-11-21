@@ -172,70 +172,92 @@ export default function TutorDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-10">
-          <h2 className="text-xl font-bold text-slate-900 mb-5">
-            Manage Your Account
-          </h2>
+        
+{/* Quick Actions */}
+<div className="mt-10">
+  <h2 className="text-xl font-bold text-slate-900 mb-5">
+    Manage Your Account
+  </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <Link
-              href="/my-tuitions"
-              className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
-            >
-              <div className="text-3xl mb-4">📚</div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <Link
+      href="/post-tuition"
+      className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
+    >
+      <div className="text-3xl mb-4">➕</div>
 
-              <h3 className="text-lg font-semibold text-slate-900">
-                My Tuitions
-              </h3>
+      <h3 className="text-lg font-semibold text-slate-900">
+        Post New Tuition
+      </h3>
 
-              <p className="text-sm text-slate-500 mt-2">
-                View your tuition posts and approval status.
-              </p>
+      <p className="text-sm text-slate-500 mt-2">
+        Create a new tuition opportunity for students.
+      </p>
 
-              <p className="text-sm font-semibold text-indigo-600 mt-4">
-                View Tuitions →
-              </p>
-            </Link>
+      <p className="text-sm font-semibold text-indigo-600 mt-4">
+        Post Tuition →
+      </p>
+    </Link>
 
-            <Link
-              href="/tutor-applications"
-              className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
-            >
-              <div className="text-3xl mb-4">📋</div>
+    <Link
+      href="/my-tuitions"
+      className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
+    >
+      <div className="text-3xl mb-4">📚</div>
 
-              <h3 className="text-lg font-semibold text-slate-900">
-                Manage Applications
-              </h3>
+      <h3 className="text-lg font-semibold text-slate-900">
+        My Tuitions
+      </h3>
 
-              <p className="text-sm text-slate-500 mt-2">
-                Review student applications and update their status.
-              </p>
+      <p className="text-sm text-slate-500 mt-2">
+        View your tuition posts and approval status.
+      </p>
 
-              <p className="text-sm font-semibold text-indigo-600 mt-4">
-                View Applications →
-              </p>
-            </Link>
+      <p className="text-sm font-semibold text-indigo-600 mt-4">
+        View Tuitions →
+      </p>
+    </Link>
 
-            <Link
-              href="/tuitions"
-              className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
-            >
-              <div className="text-3xl mb-4">🔎</div>
+    <Link
+      href="/tutor-applications"
+      className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
+    >
+      <div className="text-3xl mb-4">📋</div>
 
-              <h3 className="text-lg font-semibold text-slate-900">
-                Browse Tuitions
-              </h3>
+      <h3 className="text-lg font-semibold text-slate-900">
+        Manage Applications
+      </h3>
 
-              <p className="text-sm text-slate-500 mt-2">
-                Explore available tuition opportunities.
-              </p>
+      <p className="text-sm text-slate-500 mt-2">
+        Review student applications and update their status.
+      </p>
 
-              <p className="text-sm font-semibold text-indigo-600 mt-4">
-                Explore →
-              </p>
-            </Link>
-          </div>
-        </div>
+      <p className="text-sm font-semibold text-indigo-600 mt-4">
+        View Applications →
+      </p>
+    </Link>
+
+    <Link
+      href="/tuitions"
+      className="bg-white border border-slate-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition"
+    >
+      <div className="text-3xl mb-4">🔎</div>
+
+      <h3 className="text-lg font-semibold text-slate-900">
+        Browse Tuitions
+      </h3>
+
+      <p className="text-sm text-slate-500 mt-2">
+        Explore available tuition opportunities.
+      </p>
+
+      <p className="text-sm font-semibold text-indigo-600 mt-4">
+        Explore →
+      </p>
+    </Link>
+  </div>
+</div>
+
 
         {/* Recent Tuition Summary */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 mt-10">
