@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,6 +13,7 @@ interface Tuition {
   location: string;
   monthlyFee: number;
   daysPerWeek: number;
+  bannerImage?: string;
 }
 
 export default function TuitionsPage() {
@@ -73,6 +75,7 @@ export default function TuitionsPage() {
             <h2 className="text-xl font-bold text-slate-900">
               No Tuitions Available
             </h2>
+
             <p className="mt-2 text-slate-500">
               Please check again later for new opportunities.
             </p>
@@ -82,65 +85,75 @@ export default function TuitionsPage() {
             {tuitions.map((tuition) => (
               <div
                 key={tuition._id}
-                className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600">
-                    {tuition.subject}
-                  </span>
+                {tuition.bannerImage && (
+                  <img
+                    src={tuition.bannerImage}
+                    alt={tuition.title}
+                    className="h-48 w-full object-cover"
+                  />
+                )}
 
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      tuition.mode === "Online"
-                        ? "bg-emerald-50 text-emerald-600"
-                        : "bg-amber-50 text-amber-600"
-                    }`}
-                  >
-                    {tuition.mode}
-                  </span>
-                </div>
+                <div className="p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600">
+                      {tuition.subject}
+                    </span>
 
-                <h2 className="mt-6 text-xl font-bold text-slate-900">
-                  {tuition.title}
-                </h2>
-
-                <div className="mt-5 space-y-3 text-sm text-slate-500">
-                  <div className="flex justify-between gap-3">
-                    <span>Class</span>
-                    <span className="font-medium text-slate-900">
-                      {tuition.classLevel}
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        tuition.mode === "Online"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : "bg-amber-50 text-amber-600"
+                      }`}
+                    >
+                      {tuition.mode}
                     </span>
                   </div>
 
-                  <div className="flex justify-between gap-3">
-                    <span>Location</span>
-                    <span className="text-right font-medium text-slate-900">
-                      {tuition.location}
-                    </span>
+                  <h2 className="mt-6 text-xl font-bold text-slate-900">
+                    {tuition.title}
+                  </h2>
+
+                  <div className="mt-5 space-y-3 text-sm text-slate-500">
+                    <div className="flex justify-between gap-3">
+                      <span>Class</span>
+                      <span className="font-medium text-slate-900">
+                        {tuition.classLevel}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <span>Location</span>
+                      <span className="text-right font-medium text-slate-900">
+                        {tuition.location}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Days per week</span>
+                      <span className="font-medium text-slate-900">
+                        {tuition.daysPerWeek} days
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Days per week</span>
-                    <span className="font-medium text-slate-900">
-                      {tuition.daysPerWeek} days
-                    </span>
-                  </div>
-                </div>
+                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+                    <div>
+                      <p className="text-xs text-slate-500">Monthly Fee</p>
+                      <p className="mt-1 text-lg font-bold text-indigo-600">
+                        ৳{tuition.monthlyFee.toLocaleString("en-BD")}
+                      </p>
+                    </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
-                  <div>
-                    <p className="text-xs text-slate-500">Monthly Fee</p>
-                    <p className="mt-1 text-lg font-bold text-indigo-600">
-                      ৳{tuition.monthlyFee.toLocaleString("en-BD")}
-                    </p>
+                    <Link
+                      href={`/tuitions/${tuition._id}`}
+                      className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                    >
+                      View Details →
+                    </Link>
                   </div>
-
-                  <Link
-                    href={`/tuitions/${tuition._id}`}
-                    className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                  >
-                    View Details →
-                  </Link>
                 </div>
               </div>
             ))}
