@@ -69,14 +69,6 @@ export default function MyApplicationsPage() {
 
   // Student cancels a pending application
   const handleCancelApplication = async (applicationId: string) => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this application?"
-    );
-
-    if (!confirmCancel) {
-      return;
-    }
-
     try {
       setCancellingId(applicationId);
 
@@ -117,6 +109,7 @@ export default function MyApplicationsPage() {
       setCancellingId(null);
     }
   };
+
 
   const getStatusStyle = (status: string) => {
     if (status === "accepted") {

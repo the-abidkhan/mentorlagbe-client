@@ -54,6 +54,7 @@ export default function MyTuitionsPage() {
   const [formData, setFormData] = useState<TuitionFormData>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [toggling, setToggling] = useState<string | null>(null);
 
   const fetchMyTuitions = async () => {
     try {
@@ -193,6 +194,56 @@ export default function MyTuitionsPage() {
     setEditingTuition(null);
     setFormData(initialFormData);
   };
+
+
+const handleToggleActive = async (tuition: Tuition) => {
+  try {
+    setToggling(tuition._id);
+
+    const { data } = await authClient.token();
+
+    if (!data?.token) {
+      toast.error("Please login again.");
+      return;
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions/${tuition._id}/active`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.token}`,
+        },
+        body: JSON.stringify({
+          isActive: !tuition.isActive,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      toast.error(result.message || "Failed to update tuition status.");
+      return;
+    }
+
+    setTuitions((previousTuitions) =>
+      previousTuitions.map((item) =>
+        item._id === tuition._id
+          ? { ...item, isActive: !item.isActive }
+          : item
+      )
+    );
+
+    toast.success(result.message);
+  } catch {
+    toast.error("Something went wrong. Please try again.");
+  } finally {
+    setToggling(null);
+  }
+};
+
 
   const handleDelete = async (tuitionId: string) => {
     setDeleting(tuitionId);
@@ -597,13 +648,29 @@ export default function MyTuitionsPage() {
                   </p>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => handleEdit(tuition)}
                     className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-3 rounded-lg font-medium transition"
                   >
                     Edit Tuition
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleActive(tuition)}
+                    disabled={toggling === tuition._id}
+                    className={`px-4 py-3 rounded-lg font-medium transition disabled:opacity-50 ${tuition.isActive
+                        ? "bg-amber-50 hover:bg-amber-100 text-amber-700"
+                        : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                      }`}
+                  >
+                    {toggling === tuition._id
+                      ? "Updating..."
+                      : tuition.isActive
+                        ? "Deactivate"
+                        : "Activate"}
                   </button>
 
                   <button
