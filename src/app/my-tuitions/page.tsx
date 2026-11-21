@@ -529,6 +529,13 @@ export default function MyTuitionsPage() {
                 key={tuition._id}
                 className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
               >
+                {tuition.bannerImage && (
+                  <img
+                    src={tuition.bannerImage}
+                    alt={tuition.title}
+                    className="w-full h-48 object-cover rounded-lg mb-5"
+                  />
+                )}
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">

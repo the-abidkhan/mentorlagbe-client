@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -25,7 +24,9 @@ export default function PostTuitionPage() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
+  // Handle normal form input changes
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -42,11 +43,99 @@ export default function PostTuitionPage() {
     });
   };
 
+  // Upload banner image to ImgBB
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    // Check image type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file.");
+      e.target.value = "";
+      return;
+    }
+
+    // Check image size (maximum 5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+
+    if (!apiKey) {
+      toast.error("ImgBB API key not found.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    // Clear the previous image while uploading a new one
+    setFormData((prev) => ({
+      ...prev,
+      bannerImage: "",
+    }));
+
+    try {
+      const imageData = new FormData();
+      imageData.append("image", file);
+
+      const response = await fetch(
+        `https://api.imgbb.com/1/upload?key=${apiKey}`,
+        {
+          method: "POST",
+          body: imageData,
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success || !result.data?.url) {
+        throw new Error("Failed to upload banner image.");
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        bannerImage: result.data.url,
+      }));
+
+      toast.success("Banner image uploaded successfully!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed. Please try again."
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Submit tuition form
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!session?.user || session.user.role !== "tutor") {
       toast.error("Only tutors can post tuition.");
+      return;
+    }
+
+    if (!formData.bannerImage) {
+      toast.error("Please upload a banner image first.");
+      return;
+    }
+
+    if (formData.monthlyFee < 1) {
+      toast.error("Monthly fee must be at least 1 BDT.");
+      return;
+    }
+
+    if (formData.daysPerWeek < 1 || formData.daysPerWeek > 7) {
+      toast.error("Days per week must be between 1 and 7.");
       return;
     }
 
@@ -96,9 +185,11 @@ export default function PostTuitionPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">
             Tutor Dashboard
           </p>
+
           <h1 className="mt-2 text-3xl font-bold text-slate-900">
             Post a New Tuition
           </h1>
+
           <p className="mt-3 text-slate-500">
             Provide the details of your tuition opportunity.
           </p>
@@ -112,6 +203,7 @@ export default function PostTuitionPage() {
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Tuition Title
             </label>
+
             <input
               name="title"
               value={formData.title}
@@ -127,6 +219,7 @@ export default function PostTuitionPage() {
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Subject
               </label>
+
               <input
                 name="subject"
                 value={formData.subject}
@@ -141,6 +234,7 @@ export default function PostTuitionPage() {
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Class Level
               </label>
+
               <input
                 name="classLevel"
                 value={formData.classLevel}
@@ -157,6 +251,7 @@ export default function PostTuitionPage() {
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Tuition Mode
               </label>
+
               <select
                 name="mode"
                 value={formData.mode}
@@ -172,6 +267,7 @@ export default function PostTuitionPage() {
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Location
               </label>
+
               <input
                 name="location"
                 value={formData.location}
@@ -188,6 +284,7 @@ export default function PostTuitionPage() {
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Monthly Fee (BDT)
               </label>
+
               <input
                 type="number"
                 name="monthlyFee"
@@ -203,6 +300,7 @@ export default function PostTuitionPage() {
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Days Per Week
               </label>
+
               <input
                 type="number"
                 name="daysPerWeek"
@@ -216,25 +314,50 @@ export default function PostTuitionPage() {
             </div>
           </div>
 
+          {/* Banner Image Upload */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
-              Banner Image URL
+              Tuition Banner Image
             </label>
+
             <input
-              type="url"
-              name="bannerImage"
-              value={formData.bannerImage}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              required
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={isUploading || isLoading}
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
             />
+
+            <p className="mt-2 text-xs text-slate-500">
+              Select an image. Maximum file size: 5 MB.
+            </p>
+
+            {isUploading && (
+              <p className="mt-3 text-sm font-medium text-indigo-600">
+                Uploading image to ImgBB...
+              </p>
+            )}
+
+            {formData.bannerImage && (
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-medium text-emerald-600">
+                  Image uploaded successfully
+                </p>
+
+                <img
+                  src={formData.bannerImage}
+                  alt="Tuition banner preview"
+                  className="h-48 w-full rounded-lg border border-slate-200 object-cover"
+                />
+              </div>
+            )}
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
               Description
             </label>
+
             <textarea
               name="description"
               value={formData.description}
@@ -248,10 +371,14 @@ export default function PostTuitionPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isUploading || !formData.bannerImage}
             className="w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
           >
-            {isLoading ? "Posting..." : "Post Tuition"}
+            {isUploading
+              ? "Uploading Image..."
+              : isLoading
+                ? "Posting..."
+                : "Post Tuition"}
           </button>
         </form>
       </div>
