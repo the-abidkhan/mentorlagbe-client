@@ -15,58 +15,172 @@ interface Tuition {
   location: string;
   monthlyFee: number;
   daysPerWeek: number;
+  bannerImage: string;
   description: string;
   approvalStatus: "pending" | "approved" | "rejected";
   isActive: boolean;
   createdAt: string;
 }
 
+interface TuitionFormData {
+  title: string;
+  subject: string;
+  classLevel: string;
+  mode: "Online" | "Offline";
+  location: string;
+  monthlyFee: number;
+  daysPerWeek: number;
+  bannerImage: string;
+  description: string;
+}
+
+const initialFormData: TuitionFormData = {
+  title: "",
+  subject: "",
+  classLevel: "",
+  mode: "Offline",
+  location: "",
+  monthlyFee: 0,
+  daysPerWeek: 3,
+  bannerImage: "",
+  description: "",
+};
+
 export default function MyTuitionsPage() {
   const { data: session, isPending } = authClient.useSession();
 
   const [tuitions, setTuitions] = useState<Tuition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingTuition, setEditingTuition] = useState<string | null>(null);
+  const [formData, setFormData] = useState<TuitionFormData>(initialFormData);
+  const [saving, setSaving] = useState(false);
+
+  const fetchMyTuitions = async () => {
+    try {
+      const { data } = await authClient.token();
+
+      if (!data?.token) {
+        toast.error("Please login again.");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions/my`,
+        {
+          headers: {
+            Authorization: `Bearer ${data.token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.message || "Failed to load your tuitions.");
+        return;
+      }
+
+      setTuitions(result);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchMyTuitions = async () => {
-      try {
-        const { data } = await authClient.token();
-
-        if (!data?.token) {
-          toast.error("Please login again.");
-          return;
-        }
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions/my`,
-          {
-            headers: {
-              Authorization: `Bearer ${data.token}`,
-            },
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          toast.error(result.message || "Failed to load your tuitions.");
-          return;
-        }
-
-        setTuitions(result);
-      } catch {
-        toast.error("Something went wrong. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (!isPending && session?.user?.role === "tutor") {
       fetchMyTuitions();
     } else if (!isPending) {
       setLoading(false);
     }
   }, [session, isPending]);
+
+  const handleEdit = (tuition: Tuition) => {
+    setEditingTuition(tuition._id);
+
+    setFormData({
+      title: tuition.title,
+      subject: tuition.subject,
+      classLevel: tuition.classLevel,
+      mode: tuition.mode,
+      location: tuition.location,
+      monthlyFee: tuition.monthlyFee,
+      daysPerWeek: tuition.daysPerWeek,
+      bannerImage: tuition.bannerImage || "",
+      description: tuition.description,
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "monthlyFee" || name === "daysPerWeek"
+          ? Number(value)
+          : value,
+    }));
+  };
+
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!editingTuition) return;
+
+    setSaving(true);
+
+    try {
+      const { data } = await authClient.token();
+
+      if (!data?.token) {
+        toast.error("Please login again.");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions/${editingTuition}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.message || "Failed to update tuition.");
+        return;
+      }
+
+      toast.success(result.message || "Tuition updated successfully.");
+
+      setEditingTuition(null);
+      setFormData(initialFormData);
+
+      await fetchMyTuitions();
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTuition(null);
+    setFormData(initialFormData);
+  };
 
   const pendingCount = tuitions.filter(
     (tuition) => tuition.approvalStatus === "pending"
@@ -152,6 +266,172 @@ export default function MyTuitionsPage() {
             Browse Tuitions
           </Link>
         </div>
+
+        {/* Edit Tuition Form */}
+        {editingTuition && (
+          <div className="bg-white border border-indigo-200 rounded-xl p-6 mb-8 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">
+              Edit Tuition
+            </h2>
+
+            <p className="text-sm text-slate-500 mb-6">
+              Updated tuition information will be submitted for admin approval.
+            </p>
+
+            <form onSubmit={handleUpdate} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Tuition Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Class Level
+                  </label>
+                  <input
+                    type="text"
+                    name="classLevel"
+                    value={formData.classLevel}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Tuition Mode
+                  </label>
+                  <select
+                    name="mode"
+                    value={formData.mode}
+                    onChange={handleChange}
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="Online">Online</option>
+                    <option value="Offline">Offline</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Monthly Fee (BDT)
+                  </label>
+                  <input
+                    type="number"
+                    name="monthlyFee"
+                    value={formData.monthlyFee}
+                    onChange={handleChange}
+                    min="1"
+                    required
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Days Per Week
+                  </label>
+                  <input
+                    type="number"
+                    name="daysPerWeek"
+                    value={formData.daysPerWeek}
+                    onChange={handleChange}
+                    min="1"
+                    max="7"
+                    required
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Banner Image URL
+                  </label>
+                  <input
+                    type="url"
+                    name="bannerImage"
+                    value={formData.bannerImage}
+                    onChange={handleChange}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={5}
+                  required
+                  className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-6 py-3 rounded-lg font-medium transition"
+                >
+                  {saving ? "Updating..." : "Update Tuition"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3 rounded-lg font-medium transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -264,6 +544,14 @@ export default function MyTuitionsPage() {
                     {tuition.isActive ? "Active Tuition" : "Inactive Tuition"}
                   </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleEdit(tuition)}
+                  className="mt-5 w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-3 rounded-lg font-medium transition"
+                >
+                  Edit Tuition
+                </button>
               </div>
             ))}
           </div>
