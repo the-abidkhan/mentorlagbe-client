@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import FeaturedTuitions from "@/components/FeaturedTuitions";
 
@@ -80,37 +81,16 @@ export default function HomePage() {
               and make learning more accessible with MentorLagbe.
             </p>
 
-            <form
-              action="/tuitions"
-              method="GET"
-              className="mt-9 flex max-w-2xl flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/60 sm:flex-row"
-            >
-              <div className="flex flex-1 items-center gap-3 px-3">
-                <span className="text-xl text-slate-400">⌕</span>
-                <input
-                  type="text"
-                  name="search"
-                  placeholder="Search by subject or tuition..."
-                  className="w-full bg-transparent py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="rounded-xl bg-indigo-600 px-7 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
-              >
-                Explore Tuitions →
-              </button>
-            </form>
-
-            <div className="mt-6 flex flex-wrap items-center gap-5 text-sm font-medium text-slate-500">
+            <div className="mt-9">
               <Link
                 href="/tuitions"
-                className="text-indigo-600 transition hover:text-indigo-700"
+                className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-8 py-4 text-sm font-semibold text-white transition hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200"
               >
-                Browse all tuitions →
+                Explore Tuitions →
               </Link>
-              <span className="h-1 w-1 rounded-full bg-slate-300" />
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-5 text-sm font-medium text-slate-500">
               <Link
                 href="/signup"
                 className="transition hover:text-slate-900"

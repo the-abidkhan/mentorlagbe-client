@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -19,34 +18,79 @@ interface Tuition {
 export default function TuitionsPage() {
   const [tuitions, setTuitions] = useState<Tuition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [subject, setSubject] = useState("");
+  const [classLevel, setClassLevel] = useState("");
+  const [mode, setMode] = useState("");
 
   useEffect(() => {
-    const fetchTuitions = async () => {
+    const controller = new AbortController();
+
+    // Wait briefly before sending search requests
+    const timer = setTimeout(async () => {
       try {
+        setLoading(true);
+        setError("");
+
+        const params = new URLSearchParams();
+
+        if (search.trim()) params.set("search", search.trim());
+        if (subject) params.set("subject", subject);
+        if (classLevel) params.set("classLevel", classLevel);
+        if (mode) params.set("mode", mode);
+
+        const queryString = params.toString();
+
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions`
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions${
+            queryString ? `?${queryString}` : ""
+          }`,
+          { signal: controller.signal }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch tuitions");
+          throw new Error("Failed to fetch tuitions.");
         }
 
         const data = await response.json();
         setTuitions(data);
       } catch (error) {
-        console.error("Tuition fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
 
-    fetchTuitions();
-  }, []);
+        console.error("Tuition fetch error:", error);
+        setError("Unable to load tuitions. Please try again.");
+        setTuitions([]);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [search, subject, classLevel, mode]);
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setSubject("");
+    setClassLevel("");
+    setMode("");
+  };
+
+  const hasFilters = search || subject || classLevel || mode;
 
   return (
     <main className="min-h-screen bg-slate-50 py-16">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="mb-12">
+        {/* Page Heading */}
+        <div className="mb-10">
           <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">
             Explore Opportunities
           </p>
@@ -61,41 +105,198 @@ export default function TuitionsPage() {
           </p>
         </div>
 
+        {/* Search and Filters */}
+        <div className="mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Search */}
+            <div className="lg:col-span-4">
+              <label
+                htmlFor="tuition-search"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Search Tuitions
+              </label>
+
+              <input
+                id="tuition-search"
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by tuition title or subject..."
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+
+            {/* Subject Filter */}
+            <div>
+              <label
+                htmlFor="subject-filter"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Subject
+              </label>
+
+              <select
+                id="subject-filter"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500"
+              >
+                <option value="">All Subjects</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Biology">Biology</option>
+                <option value="English">English</option>
+                <option value="ICT">ICT</option>
+                <option value="Programming">Programming</option>
+                <option value="IELTS">IELTS</option>
+              </select>
+            </div>
+
+            {/* Class Filter */}
+            <div>
+              <label
+                htmlFor="class-filter"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Class Level
+              </label>
+
+              <select
+                id="class-filter"
+                value={classLevel}
+                onChange={(e) => setClassLevel(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500"
+              >
+                <option value="">All Classes</option>
+                {Array.from({ length: 12 }, (_, index) => (
+                  <option key={index + 1} value={`Class ${index + 1}`}>
+                    Class {index + 1}
+                  </option>
+                ))}
+                <option value="SSC">SSC</option>
+                <option value="HSC">HSC</option>
+                <option value="University">University</option>
+              </select>
+            </div>
+
+            {/* Mode Filter */}
+            <div>
+              <label
+                htmlFor="mode-filter"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Tuition Mode
+              </label>
+
+              <select
+                id="mode-filter"
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500"
+              >
+                <option value="">All Modes</option>
+                <option value="Online">Online</option>
+                <option value="Offline">Offline</option>
+              </select>
+            </div>
+
+            {/* Clear Filters */}
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                disabled={!hasFilters}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900">
+            Available Tuitions
+          </h2>
+
+          {!loading && (
+            <p className="text-sm text-slate-500">
+              {tuitions.length} {tuitions.length === 1 ? "result" : "results"} found
+            </p>
+          )}
+        </div>
+
+        {/* Loading State */}
         {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((item) => (
+            {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="h-64 animate-pulse rounded-2xl bg-slate-200"
+                className="h-80 animate-pulse rounded-2xl bg-slate-200"
               />
             ))}
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-white py-16 text-center">
+            <h2 className="text-xl font-bold text-slate-900">
+              Something Went Wrong
+            </h2>
+
+            <p className="mt-2 text-slate-500">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearch((previous) => previous);
+                setSubject((previous) => previous);
+              }}
+              className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              Try Again
+            </button>
           </div>
         ) : tuitions.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center">
             <h2 className="text-xl font-bold text-slate-900">
-              No Tuitions Available
+              No Tuitions Found
             </h2>
 
             <p className="mt-2 text-slate-500">
-              Please check again later for new opportunities.
+              Try changing your search or filters to find available tuitions.
             </p>
+
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              Clear Filters
+            </button>
           </div>
         ) : (
+          /* Tuition Cards */
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {tuitions.map((tuition) => (
               <div
                 key={tuition._id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
+                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
               >
-                {tuition.bannerImage && (
+                {tuition.bannerImage ? (
                   <img
                     src={tuition.bannerImage}
                     alt={tuition.title}
                     className="h-48 w-full object-cover"
                   />
+                ) : (
+                  <div className="flex h-48 items-center justify-center bg-indigo-50 text-indigo-300">
+                    No Image Available
+                  </div>
                 )}
 
-                <div className="p-6">
+                <div className="flex flex-1 flex-col p-6">
                   <div className="flex items-center justify-between gap-3">
                     <span className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600">
                       {tuition.subject}
@@ -116,7 +317,7 @@ export default function TuitionsPage() {
                     {tuition.title}
                   </h2>
 
-                  <div className="mt-5 space-y-3 text-sm text-slate-500">
+                  <div className="mt-5 flex-1 space-y-3 text-sm text-slate-500">
                     <div className="flex justify-between gap-3">
                       <span>Class</span>
                       <span className="font-medium text-slate-900">
