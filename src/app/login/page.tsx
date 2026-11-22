@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
 
+const CLIENT_URL = "https://mentorlagbe-client-ebon.vercel.app";
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -15,22 +17,18 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Check login session
   const { data: session, isPending } = authClient.useSession();
 
-  // Redirect logged-in users to homepage
   useEffect(() => {
     if (!isPending && session) {
       router.replace("/");
     }
   }, [session, isPending, router]);
 
-  // Wait for session check
   if (isPending || session) {
     return null;
   }
 
-  // Email and password login
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -40,7 +38,7 @@ export default function LoginPage() {
       const { error } = await authClient.signIn.email({
         email,
         password,
-        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+        callbackURL: CLIENT_URL,
       });
 
       if (error) {
@@ -56,14 +54,13 @@ export default function LoginPage() {
     }
   };
 
-  // Google login
   const handleGoogleLogin = async () => {
     setError("");
 
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+        callbackURL: CLIENT_URL,
       });
 
       if (error) {
@@ -86,7 +83,6 @@ export default function LoginPage() {
         </p>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* Email */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Email Address
@@ -102,7 +98,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Password
@@ -118,14 +113,12 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <p className="text-red-400 text-sm text-center">
               {error}
             </p>
           )}
 
-          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
@@ -145,14 +138,12 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 my-6">
           <div className="h-px flex-1 bg-gray-700"></div>
           <span className="text-gray-500 text-sm">OR</span>
           <div className="h-px flex-1 bg-gray-700"></div>
         </div>
 
-        {/* Google Login */}
         <button
           type="button"
           onClick={handleGoogleLogin}

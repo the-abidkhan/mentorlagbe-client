@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -6,10 +7,11 @@ import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
 
+const CLIENT_URL = "https://mentorlagbe-client-ebon.vercel.app";
+
 export default function SignupPage() {
   const router = useRouter();
 
-  // Check login session
   const { data: session, isPending } = authClient.useSession();
 
   const [name, setName] = useState("");
@@ -21,19 +23,16 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect logged-in users to homepage
   useEffect(() => {
     if (!isPending && session) {
       router.replace("/");
     }
   }, [session, isPending, router]);
 
-  // Show nothing while checking session or redirecting
   if (isPending || session) {
     return null;
   }
 
-  // Email and password signup
   const handleSignup = async () => {
     setError("");
 
@@ -56,7 +55,7 @@ export default function SignupPage() {
         password,
         role,
         phone: phone.trim(),
-        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+        callbackURL: CLIENT_URL,
       });
 
       if (error) {
@@ -72,14 +71,13 @@ export default function SignupPage() {
     }
   };
 
-  // Google signup
   const handleGoogleSignup = async () => {
     setError("");
 
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/`,
+        callbackURL: CLIENT_URL,
       });
 
       if (error) {
@@ -102,7 +100,6 @@ export default function SignupPage() {
         </p>
 
         <div className="space-y-4">
-          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Full Name
@@ -116,7 +113,6 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Email Address
@@ -130,7 +126,6 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Phone Number
@@ -144,7 +139,6 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Select Your Role
@@ -159,7 +153,6 @@ export default function SignupPage() {
             </select>
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Password
@@ -173,12 +166,10 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <p className="text-sm text-red-500">{error}</p>
           )}
 
-          {/* Create Account Button */}
           <button
             type="button"
             onClick={handleSignup}
@@ -199,14 +190,12 @@ export default function SignupPage() {
           </Link>
         </p>
 
-        {/* Divider */}
         <div className="flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-slate-200"></div>
           <span className="text-sm text-slate-400">OR</span>
           <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 
-        {/* Google Signup */}
         <button
           type="button"
           onClick={handleGoogleSignup}
