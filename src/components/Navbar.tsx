@@ -2,13 +2,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "react-toastify";
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   const { data: session, isPending } = authClient.useSession();
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isPending) return;
@@ -26,6 +31,21 @@ export default function Navbar() {
       sessionStorage.removeItem("mentorlagbe_login_toast");
     }
   }, [session, isPending]);
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "Find Tuition", href: "/tuitions" },
+    { name: "Pricing & Pro", href: "/pricing" },
+    { name: "About", href: "/about" },
+  ];
+
+  const isActiveLink = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   const getDashboardLink = () => {
     const role = session?.user?.role;
@@ -65,46 +85,45 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+
+        {/* Logo */}
         <Link
           href="/"
-          className="font-heading text-2xl font-bold text-slate-900"
+          className="font-heading text-2xl font-extrabold tracking-tight text-slate-900"
         >
           Mentor<span className="text-indigo-600">Lagbe</span>
+          <span className="ml-1 text-indigo-500">.</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link
-            href="/"
-            className="text-slate-600 hover:text-indigo-600 transition"
-          >
-            Home
-          </Link>
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-1 rounded-2xl bg-slate-100/80 p-1 md:flex">
+          {navLinks.map((link) => {
+            const active = isActiveLink(link.href);
 
-          <Link
-            href="/tuitions"
-            className="text-slate-600 hover:text-indigo-600 transition"
-          >
-            Find Tuition
-          </Link>
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                  active
+                    ? "bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200/70"
+                    : "text-slate-600 hover:bg-white/70 hover:text-indigo-600"
+                }`}
+              >
+                {link.name}
 
-          <Link
-            href="/pricing"
-            className="text-slate-600 hover:text-indigo-600 transition"
-          >
-            Pricing &amp; Pro
-          </Link>
-
-          <Link
-            href="/about"
-            className="text-slate-600 hover:text-indigo-600 transition"
-          >
-            About
-          </Link>
+                {active && (
+                  <span className="absolute bottom-0.5 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full bg-indigo-600" />
+                )}
+              </Link>
+            );
+          })}
         </div>
 
-        <div className="flex items-center gap-4 text-sm font-medium">
+        {/* Right Side */}
+        <div className="flex items-center gap-3 text-sm font-medium">
           {isPending ? (
             <span className="text-slate-400">Loading...</span>
           ) : session?.user ? (
@@ -112,43 +131,42 @@ export default function Navbar() {
               {/* Profile Button */}
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50 transition"
+                className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100 sm:gap-3"
               >
-                {/* Profile Image */}
-                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold overflow-hidden">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-100 font-bold text-indigo-700 ring-2 ring-indigo-100">
                   {session.user.image ? (
                     <img
                       src={session.user.image}
                       alt="Profile"
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     session.user.name?.charAt(0).toUpperCase() || "U"
                   )}
                 </div>
 
-                <div className="hidden sm:flex flex-col items-start">
-                  <span className="text-slate-700">
+                <div className="hidden flex-col items-start sm:flex">
+                  <span className="max-w-32 truncate text-slate-700">
                     {session.user.name || session.user.email}
                   </span>
 
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs capitalize ${getRoleBadgeColor()}`}
+                    className={`rounded-full px-2 py-0.5 text-xs capitalize ${getRoleBadgeColor()}`}
                   >
                     {session.user.role || "User"}
                   </span>
                 </div>
 
-                <span className="text-slate-500 text-xs">▼</span>
+                <span className="text-xs text-slate-500">▼</span>
               </button>
 
               {/* Profile Dropdown */}
               {isProfileOpen && (
-                <div className="absolute right-0 top-full mt-3 w-52 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50">
+                <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
                   <Link
                     href={getDashboardLink()}
                     onClick={() => setIsProfileOpen(false)}
-                    className="block px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                    className="block px-4 py-3 text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-600"
                   >
                     Dashboard
                   </Link>
@@ -156,16 +174,16 @@ export default function Navbar() {
                   <Link
                     href="/profile"
                     onClick={() => setIsProfileOpen(false)}
-                    className="block px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                    className="block px-4 py-3 text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-600"
                   >
                     Update Profile
                   </Link>
 
-                  <div className="border-t border-slate-100 my-1" />
+                  <div className="my-1 border-t border-slate-100" />
 
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 transition"
+                    className="w-full px-4 py-3 text-left text-red-600 transition hover:bg-red-50"
                   >
                     Sign Out
                   </button>
@@ -176,21 +194,67 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="text-slate-700 hover:text-indigo-600 transition"
+                className="hidden text-slate-700 transition hover:text-indigo-600 sm:block"
               >
                 Login
               </Link>
 
               <Link
                 href="/signup"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition"
+                className="rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md"
               >
                 Sign Up
               </Link>
             </>
           )}
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-700 transition hover:bg-slate-100 md:hidden"
+            aria-label="Toggle navigation menu"
+          >
+            {isMobileMenuOpen ? "✕" : "☰"}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <div className="border-t border-slate-200 bg-white px-4 py-4 shadow-lg md:hidden">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2">
+            {navLinks.map((link) => {
+              const active = isActiveLink(link.href);
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                    active
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-indigo-600"
+                  }`}
+                >
+                  {active && <span className="mr-2">●</span>}
+                  {link.name}
+                </Link>
+              );
+            })}
+
+            {!session?.user && !isPending && (
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Login
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

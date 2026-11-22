@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { ToastContainer } from "react-toastify";
+import { Suspense } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
@@ -37,7 +38,9 @@ export default function RootLayout({
       className={`${jakarta.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="font-sans min-h-full flex flex-col bg-[#F8FAFC] text-[#0F172A]">
-        <Navbar />
+        <Suspense fallback={<div className="h-16 bg-white" />}>
+          <Navbar />
+        </Suspense>
 
         <main className="flex-1">{children}</main>
 
