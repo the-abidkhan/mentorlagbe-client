@@ -75,7 +75,10 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link href="/" className="text-slate-600 hover:text-indigo-600 transition">
+          <Link
+            href="/"
+            className="text-slate-600 hover:text-indigo-600 transition"
+          >
             Home
           </Link>
 
@@ -111,8 +114,17 @@ export default function Navbar() {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50 transition"
               >
-                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold">
-                  {session.user.name?.charAt(0).toUpperCase() || "U"}
+                {/* Profile Image */}
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold overflow-hidden">
+                  {session.user.image ? (
+                    <img
+                      src={session.user.image}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    session.user.name?.charAt(0).toUpperCase() || "U"
+                  )}
                 </div>
 
                 <div className="hidden sm:flex flex-col items-start">

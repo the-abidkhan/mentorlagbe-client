@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { uploadImage } from "@/lib/uploadImage";
 import { toast } from "react-toastify";
 
 export default function ProfilePage() {
@@ -11,16 +12,45 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
+  const [image, setImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Load existing profile information
   useEffect(() => {
     if (session?.user) {
       setName(session.user.name || "");
       setPhone(session.user.phone || "");
       setBio(session.user.bio || "");
+      setImage(session.user.image || "");
     }
   }, [session]);
+
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+
+      const imageUrl = await uploadImage(file);
+
+      setImage(imageUrl);
+
+      toast.success("Profile image uploaded successfully!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed."
+      );
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +65,7 @@ export default function ProfilePage() {
 
       const { error } = await authClient.updateUser({
         name: name.trim(),
+        image: image,
         phone: phone.trim(),
         bio: bio.trim(),
       });
@@ -82,6 +113,38 @@ export default function ProfilePage() {
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
+              Profile Image
+            </label>
+
+            {image && (
+              <img
+                src={image}
+                alt="Profile preview"
+                className="w-28 h-28 rounded-full object-cover border border-slate-200 mb-4"
+              />
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={isUploading || isLoading}
+              className="w-full border border-slate-300 rounded-lg px-4 py-3"
+            />
+
+            <p className="mt-2 text-xs text-slate-500">
+              Maximum image size: 5 MB.
+            </p>
+
+            {isUploading && (
+              <p className="mt-2 text-sm text-indigo-600">
+                Uploading profile image...
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Full Name
             </label>
 
@@ -109,7 +172,7 @@ export default function ProfilePage() {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-                 Phone Number
+              Phone Number
             </label>
 
             <input
@@ -123,7 +186,7 @@ export default function ProfilePage() {
               placeholder="Enter your phone number"
               className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -141,10 +204,14 @@ export default function ProfilePage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isUploading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-3 rounded-lg transition"
           >
-            {isLoading ? "Updating..." : "Save Changes"}
+            {isLoading
+              ? "Updating..."
+              : isUploading
+                ? "Uploading..."
+                : "Save Changes"}
           </button>
         </form>
       </div>

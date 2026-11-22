@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { createTuition } from "@/services/tuitionService";
 import { TuitionFormData } from "@/types/tuition";
 import { toast } from "react-toastify";
+import { uploadImage } from "@/lib/uploadImage";
 
 export default function PostTuitionPage() {
   const router = useRouter();
@@ -51,56 +52,19 @@ export default function PostTuitionPage() {
 
     if (!file) return;
 
-    // Check image type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file.");
-      e.target.value = "";
-      return;
-    }
-
-    // Check image size (maximum 5 MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5 MB.");
-      e.target.value = "";
-      return;
-    }
-
-    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-
-    if (!apiKey) {
-      toast.error("ImgBB API key not found.");
-      return;
-    }
-
-    setIsUploading(true);
-
-    // Clear the previous image while uploading a new one
-    setFormData((prev) => ({
-      ...prev,
-      bannerImage: "",
-    }));
-
     try {
-      const imageData = new FormData();
-      imageData.append("image", file);
-
-      const response = await fetch(
-        `https://api.imgbb.com/1/upload?key=${apiKey}`,
-        {
-          method: "POST",
-          body: imageData,
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success || !result.data?.url) {
-        throw new Error("Failed to upload banner image.");
-      }
+      setIsUploading(true);
 
       setFormData((prev) => ({
         ...prev,
-        bannerImage: result.data.url,
+        bannerImage: "",
+      }));
+
+      const imageUrl = await uploadImage(file);
+
+      setFormData((prev) => ({
+        ...prev,
+        bannerImage: imageUrl,
       }));
 
       toast.success("Banner image uploaded successfully!");
@@ -108,10 +72,11 @@ export default function PostTuitionPage() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Image upload failed. Please try again."
+          : "Image upload failed."
       );
     } finally {
       setIsUploading(false);
+      e.target.value = "";
     }
   };
 
