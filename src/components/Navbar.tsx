@@ -1,8 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { MdVerified } from "react-icons/md";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "react-toastify";
 
@@ -16,6 +18,8 @@ export default function Navbar() {
 
   const role = session?.user?.role;
   const isAdmin = role === "admin";
+  const isProTutor =
+    role === "tutor" && session?.user?.plan === "pro";
 
   useEffect(() => {
     if (isPending) return;
@@ -150,8 +154,17 @@ export default function Navbar() {
                 </div>
 
                 <div className="hidden flex-col items-start sm:flex">
-                  <span className="max-w-32 truncate text-slate-700">
-                    {session.user.name || session.user.email}
+                  <span className="flex max-w-40 items-center gap-1 truncate text-slate-700">
+                    <span className="truncate">
+                      {session.user.name || session.user.email}
+                    </span>
+
+                    {isProTutor && (
+                      <MdVerified
+                        className="h-4 w-4 shrink-0 text-blue-600"
+                        title="Verified Tutor"
+                      />
+                    )}
                   </span>
 
                   <span
@@ -159,6 +172,12 @@ export default function Navbar() {
                   >
                     {role || "User"}
                   </span>
+
+                  {isProTutor && (
+                    <span className="mt-1 text-[10px] font-semibold text-blue-600">
+                      Verified Tutor
+                    </span>
+                  )}
                 </div>
 
                 <span className="text-xs text-slate-500">▼</span>
