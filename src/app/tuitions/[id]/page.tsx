@@ -4,6 +4,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { MdVerified } from "react-icons/md";
 import { authClient } from "@/lib/auth-client";
 
 interface Tuition {
@@ -18,6 +19,7 @@ interface Tuition {
   description: string;
   tutorName: string;
   tutorEmail: string;
+  tutorPlan?: string;
 }
 
 function TuitionDetailsContent() {
@@ -224,9 +226,18 @@ function TuitionDetailsContent() {
                 About the Tutor
               </h2>
 
-              <p className="mt-5 font-semibold text-slate-900">
-                {tuition.tutorName}
-              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <p className="font-semibold text-slate-900">
+                  {tuition.tutorName}
+                </p>
+
+                {tuition.tutorPlan === "pro" && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                    <MdVerified className="h-4 w-4" />
+                    Verified Tutor
+                  </span>
+                )}
+              </div>
 
               <p className="mt-1 text-sm text-slate-500">
                 {tuition.tutorEmail}
