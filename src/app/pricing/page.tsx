@@ -13,6 +13,7 @@ export default function PricingPage() {
   const router = useRouter();
 
   const { data: session } = authClient.useSession();
+  const isAdmin = session?.user?.role === "admin";
 
   const [selectedRole, setSelectedRole] = useState<"student" | "tutor">(
     "student"
@@ -28,12 +29,17 @@ export default function PricingPage() {
 
   // Logged-in users always see pricing for their own role.
   const activeRole =
-    currentUser?.role === "tutor" ? "tutor" : 
+    currentUser?.role === "tutor" ? "tutor" :
     currentUser?.role === "student" ? "student" : selectedRole;
 
   const price = activeRole === "tutor" ? 15 : 10;
 
   const handleUpgrade = async () => {
+    if (isAdmin) {
+      toast.error("Admin accounts cannot purchase a Pro plan.");
+      return;
+    }
+
     if (!isLoggedIn) {
       toast.info("Please login first to upgrade your plan.");
       router.push("/login");
@@ -294,28 +300,34 @@ export default function PricingPage() {
               </ul>
             </div>
 
-            <button
-              onClick={handleUpgrade}
-              disabled={loading || isPro}
-              className="mt-9 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Redirecting...
-                </>
-              ) : isPro ? (
-                <>
-                  <Check size={18} />
-                  Pro Active
-                </>
-              ) : (
-                <>
-                  <Crown size={18} />
-                  Upgrade to Pro
-                </>
-              )}
-            </button>
+            {isAdmin ? (
+              <div className="mt-9 rounded-xl bg-slate-100 px-4 py-3.5 text-center text-sm text-slate-600">
+                Admin accounts do not need a Pro plan.
+              </div>
+            ) : (
+              <button
+                onClick={handleUpgrade}
+                disabled={loading || isPro}
+                className="mt-9 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Redirecting...
+                  </>
+                ) : isPro ? (
+                  <>
+                    <Check size={18} />
+                    Pro Active
+                  </>
+                ) : (
+                  <>
+                    <Crown size={18} />
+                    Upgrade to Pro
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
