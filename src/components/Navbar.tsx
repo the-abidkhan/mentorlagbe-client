@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -14,6 +13,9 @@ export default function Navbar() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const role = session?.user?.role;
+  const isAdmin = role === "admin";
 
   useEffect(() => {
     if (isPending) return;
@@ -32,12 +34,17 @@ export default function Navbar() {
     }
   }, [session, isPending]);
 
-  const navLinks = [
+  const allNavLinks = [
     { name: "Home", href: "/" },
     { name: "Find Tuition", href: "/tuitions" },
     { name: "Pricing & Pro", href: "/pricing" },
     { name: "About", href: "/about" },
   ];
+
+  // Admin does not need a Pro plan, so hide the pricing link
+  const navLinks = isAdmin
+    ? allNavLinks.filter((link) => link.href !== "/pricing")
+    : allNavLinks;
 
   const isActiveLink = (href: string) => {
     if (href === "/") {
@@ -48,8 +55,6 @@ export default function Navbar() {
   };
 
   const getDashboardLink = () => {
-    const role = session?.user?.role;
-
     if (role === "student") return "/student/dashboard";
     if (role === "tutor") return "/tutor/dashboard";
     if (role === "admin") return "/admin/dashboard";
@@ -58,8 +63,6 @@ export default function Navbar() {
   };
 
   const getRoleBadgeColor = () => {
-    const role = session?.user?.role;
-
     if (role === "student") return "bg-blue-100 text-blue-700";
     if (role === "tutor") return "bg-emerald-100 text-emerald-700";
     if (role === "admin") return "bg-amber-100 text-amber-700";
@@ -77,6 +80,7 @@ export default function Navbar() {
       }
 
       setIsProfileOpen(false);
+      setIsMobileMenuOpen(false);
       sessionStorage.removeItem("mentorlagbe_login_toast");
       toast.success("Logged out successfully!");
     } catch {
@@ -153,7 +157,7 @@ export default function Navbar() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs capitalize ${getRoleBadgeColor()}`}
                   >
-                    {session.user.role || "User"}
+                    {role || "User"}
                   </span>
                 </div>
 
@@ -196,7 +200,7 @@ export default function Navbar() {
                 href="/login"
                 className="hidden text-slate-700 transition hover:text-indigo-600 sm:block"
               >
-                Login
+                Sign In
               </Link>
 
               <Link
@@ -249,7 +253,7 @@ export default function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
               >
-                Login
+                Sign In
               </Link>
             )}
           </div>
