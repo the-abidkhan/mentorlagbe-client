@@ -87,7 +87,6 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-7xl mx-auto">
-
         {/* Header */}
         <div className="mb-8">
           <p className="text-sm font-semibold text-indigo-600">
@@ -105,7 +104,6 @@ export default function StudentDashboard() {
 
         {/* Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
           <div className="bg-white border border-slate-200 rounded-xl p-6">
             <p className="text-slate-500 text-sm">
               Total Applications
@@ -132,7 +130,6 @@ export default function StudentDashboard() {
               {acceptedApplications}
             </h2>
           </div>
-
         </div>
 
         {/* Quick Actions */}
@@ -159,10 +156,17 @@ export default function StudentDashboard() {
             >
               My Applications
             </Link>
+
+            <Link
+              href="/student/saved-tuitions"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-lg transition"
+            >
+              Saved Tuitions
+            </Link>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
+

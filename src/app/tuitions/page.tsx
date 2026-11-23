@@ -15,6 +15,8 @@ interface Tuition {
   monthlyFee: number;
   daysPerWeek: number;
   bannerImage?: string;
+  tutorName?: string;
+  tutorPlan?: string;
 }
 
 export default function TuitionsPage() {
@@ -377,6 +379,33 @@ export default function TuitionsPage() {
                     <h2 className="mt-6 text-xl font-bold text-slate-900">
                       {tuition.title}
                     </h2>
+
+                    {tuition.tutorName && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="text-sm text-slate-500">
+                          By {tuition.tutorName}
+                        </span>
+
+                        {tuition.tutorPlan === "pro" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 1.75a.75.75 0 0 1 .67.12l2.1 1.5 2.56.27a.75.75 0 0 1 .62.45l1.02 2.36 1.82 1.82a.75.75 0 0 1 .18.66l-.5 2.53.5 2.53a.75.75 0 0 1-.18.66l-1.82 1.82-1.02 2.36a.75.75 0 0 1-.62.45l-2.56.27-2.1 1.5a.75.75 0 0 1-.67.12l-2.4-.9-2.4.9a.75.75 0 0 1-.67-.12l-2.1-1.5-2.56-.27a.75.75 0 0 1-.62-.45l-1.02-2.36L.41 14.7a.75.75 0 0 1-.18-.66l.5-2.53-.5-2.53a.75.75 0 0 1 .18-.66l1.82-1.82 1.02-2.36a.75.75 0 0 1 .62-.45l2.56-.27 2.1-1.5a.75.75 0 0 1 .67-.12l.8.3.8-.3ZM13.03 8.22a.75.75 0 0 0-1.06-1.06L9 10.13 8.03 9.16a.75.75 0 0 0-1.06 1.06l1.5 1.5a.75.75 0 0 0 1.06 0l3.5-3.5Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Verified Tutor
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     <div className="mt-5 flex-1 space-y-3 text-sm text-slate-500">
                       <div className="flex justify-between gap-3">
