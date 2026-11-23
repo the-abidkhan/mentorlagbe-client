@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 interface Tuition {
   _id: string;
@@ -25,10 +27,12 @@ export default function TuitionsPage() {
   const [classLevel, setClassLevel] = useState("");
   const [mode, setMode] = useState("");
 
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [savingId, setSavingId] = useState("");
+
   useEffect(() => {
     const controller = new AbortController();
 
-    // Wait briefly before sending search requests
     const timer = setTimeout(async () => {
       try {
         setLoading(true);
@@ -57,17 +61,13 @@ export default function TuitionsPage() {
         const data = await response.json();
         setTuitions(data);
       } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
+        if (error instanceof Error && error.name === "AbortError") return;
 
         console.error("Tuition fetch error:", error);
         setError("Unable to load tuitions. Please try again.");
         setTuitions([]);
       } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 400);
 
@@ -76,6 +76,80 @@ export default function TuitionsPage() {
       controller.abort();
     };
   }, [search, subject, classLevel, mode]);
+
+  // Load student's saved tuition IDs
+  useEffect(() => {
+    const loadSavedTuitions = async () => {
+      try {
+        const { data } = await authClient.token();
+
+        if (!data?.token) return;
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions/saved`,
+          {
+            headers: {
+              Authorization: `Bearer ${data.token}`,
+            },
+          }
+        );
+
+        if (!response.ok) return;
+
+        const dataList: Tuition[] = await response.json();
+        setSavedIds(dataList.map((tuition) => tuition._id));
+      } catch (error) {
+        console.error("Saved tuition fetch error:", error);
+      }
+    };
+
+    loadSavedTuitions();
+  }, []);
+
+  const handleBookmark = async (tuitionId: string) => {
+    try {
+      setSavingId(tuitionId);
+
+      const { data } = await authClient.token();
+
+      if (!data?.token) {
+        alert("Please login as a student to save tuitions.");
+        return;
+      }
+
+      const isSaved = savedIds.includes(tuitionId);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/tuitions/${tuitionId}/bookmark`,
+        {
+          method: isSaved ? "DELETE" : "POST",
+          headers: {
+            Authorization: `Bearer ${data.token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.message || "Unable to update bookmark.");
+        return;
+      }
+
+      if (isSaved) {
+        setSavedIds((previous) =>
+          previous.filter((id) => id !== tuitionId)
+        );
+      } else {
+        setSavedIds((previous) => [...previous, tuitionId]);
+      }
+    } catch (error) {
+      console.error("Bookmark error:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setSavingId("");
+    }
+  };
 
   const handleClearFilters = () => {
     setSearch("");
@@ -89,7 +163,6 @@ export default function TuitionsPage() {
   return (
     <main className="min-h-screen bg-slate-50 py-16">
       <div className="mx-auto max-w-7xl px-6">
-        {/* Page Heading */}
         <div className="mb-10">
           <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">
             Explore Opportunities
@@ -105,10 +178,8 @@ export default function TuitionsPage() {
           </p>
         </div>
 
-        {/* Search and Filters */}
         <div className="mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {/* Search */}
             <div className="lg:col-span-4">
               <label
                 htmlFor="tuition-search"
@@ -127,7 +198,6 @@ export default function TuitionsPage() {
               />
             </div>
 
-            {/* Subject Filter */}
             <div>
               <label
                 htmlFor="subject-filter"
@@ -154,7 +224,6 @@ export default function TuitionsPage() {
               </select>
             </div>
 
-            {/* Class Filter */}
             <div>
               <label
                 htmlFor="class-filter"
@@ -181,7 +250,6 @@ export default function TuitionsPage() {
               </select>
             </div>
 
-            {/* Mode Filter */}
             <div>
               <label
                 htmlFor="mode-filter"
@@ -202,7 +270,6 @@ export default function TuitionsPage() {
               </select>
             </div>
 
-            {/* Clear Filters */}
             <div className="flex items-end">
               <button
                 type="button"
@@ -216,7 +283,6 @@ export default function TuitionsPage() {
           </div>
         </div>
 
-        {/* Results Count */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">
             Available Tuitions
@@ -224,12 +290,12 @@ export default function TuitionsPage() {
 
           {!loading && (
             <p className="text-sm text-slate-500">
-              {tuitions.length} {tuitions.length === 1 ? "result" : "results"} found
+              {tuitions.length}{" "}
+              {tuitions.length === 1 ? "result" : "results"} found
             </p>
           )}
         </div>
 
-        {/* Loading State */}
         {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((item) => (
@@ -244,15 +310,10 @@ export default function TuitionsPage() {
             <h2 className="text-xl font-bold text-slate-900">
               Something Went Wrong
             </h2>
-
             <p className="mt-2 text-slate-500">{error}</p>
-
             <button
               type="button"
-              onClick={() => {
-                setSearch((previous) => previous);
-                setSubject((previous) => previous);
-              }}
+              onClick={() => setSearch((previous) => previous + " ")}
               className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
             >
               Try Again
@@ -263,11 +324,9 @@ export default function TuitionsPage() {
             <h2 className="text-xl font-bold text-slate-900">
               No Tuitions Found
             </h2>
-
             <p className="mt-2 text-slate-500">
               Try changing your search or filters to find available tuitions.
             </p>
-
             <button
               type="button"
               onClick={handleClearFilters}
@@ -277,87 +336,109 @@ export default function TuitionsPage() {
             </button>
           </div>
         ) : (
-          /* Tuition Cards */
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {tuitions.map((tuition) => (
-              <div
-                key={tuition._id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
-              >
-                {tuition.bannerImage ? (
-                  <img
-                    src={tuition.bannerImage}
-                    alt={tuition.title}
-                    className="h-48 w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-48 items-center justify-center bg-indigo-50 text-indigo-300">
-                    No Image Available
-                  </div>
-                )}
+            {tuitions.map((tuition) => {
+              const isSaved = savedIds.includes(tuition._id);
 
-                <div className="flex flex-1 flex-col p-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600">
-                      {tuition.subject}
-                    </span>
+              return (
+                <div
+                  key={tuition._id}
+                  className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg"
+                >
+                  {tuition.bannerImage ? (
+                    <img
+                      src={tuition.bannerImage}
+                      alt={tuition.title}
+                      className="h-48 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-48 items-center justify-center bg-indigo-50 text-indigo-300">
+                      No Image Available
+                    </div>
+                  )}
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        tuition.mode === "Online"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-amber-50 text-amber-600"
-                      }`}
-                    >
-                      {tuition.mode}
-                    </span>
-                  </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600">
+                        {tuition.subject}
+                      </span>
 
-                  <h2 className="mt-6 text-xl font-bold text-slate-900">
-                    {tuition.title}
-                  </h2>
-
-                  <div className="mt-5 flex-1 space-y-3 text-sm text-slate-500">
-                    <div className="flex justify-between gap-3">
-                      <span>Class</span>
-                      <span className="font-medium text-slate-900">
-                        {tuition.classLevel}
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          tuition.mode === "Online"
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-amber-50 text-amber-600"
+                        }`}
+                      >
+                        {tuition.mode}
                       </span>
                     </div>
 
-                    <div className="flex justify-between gap-3">
-                      <span>Location</span>
-                      <span className="text-right font-medium text-slate-900">
-                        {tuition.location}
-                      </span>
+                    <h2 className="mt-6 text-xl font-bold text-slate-900">
+                      {tuition.title}
+                    </h2>
+
+                    <div className="mt-5 flex-1 space-y-3 text-sm text-slate-500">
+                      <div className="flex justify-between gap-3">
+                        <span>Class</span>
+                        <span className="font-medium text-slate-900">
+                          {tuition.classLevel}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between gap-3">
+                        <span>Location</span>
+                        <span className="text-right font-medium text-slate-900">
+                          {tuition.location}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span>Days per week</span>
+                        <span className="font-medium text-slate-900">
+                          {tuition.daysPerWeek} days
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex justify-between">
-                      <span>Days per week</span>
-                      <span className="font-medium text-slate-900">
-                        {tuition.daysPerWeek} days
-                      </span>
-                    </div>
-                  </div>
+                    <div className="mt-6 border-t border-slate-100 pt-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-slate-500">Monthly Fee</p>
+                          <p className="mt-1 text-lg font-bold text-indigo-600">
+                            ৳{tuition.monthlyFee.toLocaleString("en-BD")}
+                          </p>
+                        </div>
 
-                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
-                    <div>
-                      <p className="text-xs text-slate-500">Monthly Fee</p>
-                      <p className="mt-1 text-lg font-bold text-indigo-600">
-                        ৳{tuition.monthlyFee.toLocaleString("en-BD")}
-                      </p>
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => handleBookmark(tuition._id)}
+                          disabled={savingId === tuition._id}
+                          className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+                            isSaved
+                              ? "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                              : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {savingId === tuition._id
+                            ? "Please wait..."
+                            : isSaved
+                              ? "♥ Saved"
+                              : "♡ Save"}
+                        </button>
+                      </div>
 
-                    <Link
-                      href={`/tuitions/${tuition._id}`}
-                      className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                    >
-                      View Details →
-                    </Link>
+                      <Link
+                        href={`/tuitions/${tuition._id}`}
+                        className="mt-5 block rounded-xl bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
+                      >
+                        View Details →
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
